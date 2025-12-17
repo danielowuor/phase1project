@@ -428,10 +428,97 @@ Remove rows without this information
 df_clean = df_clean.dropna(subset=['Aircraft.Category']) # Drop rows where 'Aircraft.Category' is NaN
 ```
 
+Total Injuries
+
 
 ```python
 # Total Injuries combined metric to make comparison numerically
 df['Total.Injuries'] = (df['Total.Fatal.Injuries'] + df['Total.Serious.Injuries'] + df['Total.Minor.Injuries']) # Calculate total injuries
+```
+
+Severity level classification based on injury outcomes
+
+
+```python
+def categorize_severity(row):
+    if row['Injury.Severity'] == 'Fatal' or row['Total.Fatal.Injuries'] > 0:
+        return 'Fatal'
+    elif row['Total.Serious.Injuries'] > 0 or row['Total.Minor.Injuries'] > 0:
+        return 'Non-Fatal Injury'
+    elif row['Injury.Severity'] == 'Non-Fatal':
+        return 'Non-Fatal No Injury'
+    else:
+        return 'Unknown'
+df_clean['Severity.Category'] = df_clean.apply(categorize_severity, axis=1)
+```
+
+Filter out Rare Manufacturers
+
+
+```python
+make_counts = df_clean['Make'].value_counts()
+common_makes = make_counts[make_counts >= 50].index
+
+df_clean = df_clean[df_clean['Make'].isin(common_makes)]
+
+```
+
+Final Dataset Validation
+A final review confirmed the dataset was clean and analysis-ready.
+
+
+```python
+df_clean.info()
+```
+
+    <class 'pandas.core.frame.DataFrame'>
+    Index: 20741 entries, 24818 to 88886
+    Data columns (total 34 columns):
+     #   Column                  Non-Null Count  Dtype         
+    ---  ------                  --------------  -----         
+     0   Event.Id                20741 non-null  object        
+     1   Investigation.Type      20741 non-null  object        
+     2   Accident.Number         20741 non-null  object        
+     3   Event.Date              20741 non-null  datetime64[ns]
+     4   Location                20734 non-null  object        
+     5   Country                 20740 non-null  object        
+     6   Latitude                18516 non-null  object        
+     7   Longitude               18512 non-null  object        
+     8   Airport.Code            12730 non-null  object        
+     9   Airport.Name            12855 non-null  object        
+     10  Injury.Severity         19961 non-null  object        
+     11  Aircraft.damage         19621 non-null  object        
+     12  Aircraft.Category       20741 non-null  object        
+     13  Registration.Number     20515 non-null  object        
+     14  Make                    20741 non-null  object        
+     15  Model                   20728 non-null  object        
+     16  Amateur.Built           20727 non-null  object        
+     17  Number.of.Engines       18118 non-null  float64       
+     18  Engine.Type             20741 non-null  object        
+     19  FAR.Description         20309 non-null  object        
+     20  Schedule                2423 non-null   object        
+     21  Purpose.of.flight       20741 non-null  object        
+     22  Air.carrier             10068 non-null  object        
+     23  Total.Fatal.Injuries    20741 non-null  float64       
+     24  Total.Serious.Injuries  20741 non-null  float64       
+     25  Total.Minor.Injuries    20741 non-null  float64       
+     26  Total.Uninjured         20741 non-null  float64       
+     27  Weather.Condition       20741 non-null  object        
+     28  Broad.phase.of.flight   2797 non-null   object        
+     29  Report.Status           16148 non-null  object        
+     30  Publication.Date        19785 non-null  object        
+     31  Make_Model              20728 non-null  object        
+     32  Year                    20741 non-null  int32         
+     33  Severity.Category       20741 non-null  object        
+    dtypes: datetime64[ns](1), float64(5), int32(1), object(27)
+    memory usage: 5.5+ MB
+    
+
+Export cleaned data
+
+
+```python
+df_clean.to_csv('aviation_data_cleaned.csv', index=False)
 ```
 
 ## Data Analysis
