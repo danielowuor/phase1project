@@ -345,7 +345,6 @@ Converted the column to datetime format. We then filtered the dataset to include
 ```python
 df_clean['Event.Date'] = pd.to_datetime(df_clean['Event.Date'])
 df_clean['Year'] = df_clean['Event.Date'].dt.year
-df_clean.drop
 df_clean = df_clean[df_clean['Year'] >= 1990] #ocus on data from 1990 onwards for better relevance to 2025
 ```
 
@@ -452,6 +451,19 @@ def categorize_severity(row):
 df_clean['Severity.Category'] = df_clean.apply(categorize_severity, axis=1)
 ```
 
+
+```python
+# Analyze Fatal vs Non-Fatal Accidents by Manufacturer
+def classify_outcome(severity):
+    if severity == 'Fatal':
+        return 'Fatal'
+    elif severity in ['Non-Fatal', 'Incident', 'Minor', 'Serious']:
+        return 'Non-Fatal'
+    else:
+        return 'Unknown'
+df_clean['Outcome'] = df_clean['Injury.Severity'].apply(classify_outcome)
+```
+
 Filter out Rare Manufacturers
 
 
@@ -473,7 +485,7 @@ df_clean.info()
 
     <class 'pandas.core.frame.DataFrame'>
     Index: 20741 entries, 24818 to 88886
-    Data columns (total 34 columns):
+    Data columns (total 35 columns):
      #   Column                  Non-Null Count  Dtype         
     ---  ------                  --------------  -----         
      0   Event.Id                20741 non-null  object        
@@ -510,8 +522,9 @@ df_clean.info()
      31  Make_Model              20728 non-null  object        
      32  Year                    20741 non-null  int32         
      33  Severity.Category       20741 non-null  object        
-    dtypes: datetime64[ns](1), float64(5), int32(1), object(27)
-    memory usage: 5.5+ MB
+     34  Outcome                 20741 non-null  object        
+    dtypes: datetime64[ns](1), float64(5), int32(1), object(28)
+    memory usage: 5.6+ MB
     
 
 Export cleaned data
@@ -519,6 +532,352 @@ Export cleaned data
 
 ```python
 df_clean.to_csv('aviation_data_cleaned.csv', index=False)
+# Export just the key columns for analysis
+key_columns = [
+    'Event.Id', 'Event.Date', 'Make', 'Model', 
+    'Make_Model', 'Aircraft.Category', 'Injury.Severity',
+    'Total.Fatal.Injuries', 'Total.Serious.Injuries',
+    'Total.Minor.Injuries', 'Total.Uninjured',
+    'Weather.Condition', 'Broad.phase.of.flight',
+    'Purpose.of.flight', 'Aircraft.damage'
+]
+
+df_clean[key_columns].to_csv('aviation_data_key_columns.csv', index=False)
 ```
 
 ## Data Analysis
+To identify the lowest-risk aircraft for commercial and private operations, we'll analyze the cleaned dataset across multiple dimensions:
+- Frequency Analysis: Which aircraft have the fewest accidents per unit?
+- Severity Analysis: When accidents do occur, which aircraft result in fewer fatalities and injuries?
+- Operational Context: How do factors like flight phase, weather, and purpose affect safety?
+- Modern Trends: Focusing on recent data (last 10-15 years) to reflect current aviation technology and standards.
+
+##### Manufacturer Risk Analysis
+To determine which manufacturers have the best safety records.
+
+
+```python
+# Identify Top Manufacturers by total accident volume
+top_makes = df_clean['Make'].value_counts().nlargest(10).index
+df_top = df_clean[df_clean['Make'].isin(top_makes)]
+
+# Calculate Fatality Rate per Make
+# Group by Make and Outcome
+outcome_counts = df_top.groupby(['Make', 'Outcome']).size().unstack(fill_value=0)
+
+# Calculate Percentage
+outcome_counts['Total'] = outcome_counts['Fatal'] + outcome_counts['Non-Fatal']
+outcome_counts['Fatality_Rate'] = (outcome_counts['Fatal'] / outcome_counts['Total']) * 100
+
+# Sort by Fatality Rate for the plot
+outcome_counts = outcome_counts.sort_values('Fatality_Rate', ascending=False)
+
+# Plot
+plt.figure(figsize=(12, 6))
+sns.barplot(x=outcome_counts.index, y=outcome_counts['Fatality_Rate'], palette='Reds_d')
+
+plt.title('Fatality Rate by Aircraft Manufacturer (Top 10 by Volume)', fontsize=16)
+plt.xlabel('Manufacturer', fontsize=12)
+plt.ylabel('Percentage of Fatal Accidents (%)', fontsize=12)
+plt.axhline(y=outcome_counts['Fatality_Rate'].mean(), color='blue', linestyle='--', label='Average Fatality Rate')
+plt.legend()
+```
+
+
+
+
+    <matplotlib.legend.Legend at 0x28aea377610>
+
+
+
+
+    
+![png](README_files/README_43_1.png)
+    
+
+
+Calculate severity distrubution
+
+
+```python
+severity_counts = df_clean['Severity.Category'].value_counts()
+
+plt.figure(figsize=(12, 6))
+sns.barplot(x=severity_counts.values, y=severity_counts.index, palette='viridis')
+
+plt.title('Distribution of Accident Severity Levels', fontsize=16)
+plt.xlabel('Number of Accidents', fontsize=12)
+plt.ylabel('Severity Level', fontsize=12)
+plt.show()
+```
+
+
+    
+![png](README_files/README_45_0.png)
+    
+
+
+Severity by Aircraft category
+
+
+```python
+category_severity = df_clean.groupby(['Aircraft.Category', 'Severity.Category']).size().unstack().fillna(0)
+# Get top 5 categories
+top_categories = df_clean['Aircraft.Category'].value_counts().head(5).index
+category_severity_top = category_severity.loc[top_categories]
+
+# Plot stacked bar chart
+plt.figure(figsize=(14, 7))
+category_severity_top.plot(kind='barh', stacked=True)
+plt.title('Severity Distribution by Top 5 Aircraft Categories', fontsize=16)
+plt.xlabel('Number of Accidents', fontsize=12)
+plt.ylabel('Aircraft Category', fontsize=12)
+plt.legend(title='Severity Level')
+plt.show()
+```
+
+
+    <Figure size 1008x504 with 0 Axes>
+
+
+
+    
+![png](README_files/README_47_1.png)
+    
+
+
+Severity by manufacturer (top 10)
+
+
+```python
+top_manufacturers = df_clean['Make'].value_counts().head(10).index
+manufacturer_data = df_clean[df_clean['Make'].isin(top_manufacturers)]
+
+# Calculate percentage of fatal accidents by manufacturer
+manufacturer_severity = manufacturer_data.groupby('Make').apply(
+    lambda x: (x['Severity.Category'] == 'Fatal').mean() * 200
+).sort_values()
+
+plt.figure(figsize=(12, 6))
+sns.barplot(x=manufacturer_severity.values, y=manufacturer_severity.index, palette='RdYlGn_r')
+
+plt.title('Percentage of Fatal Accidents by Manufacturer (Top 10)', fontsize=16)
+plt.xlabel('% of Accidents that were Fatal', fontsize=12)
+plt.ylabel('Manufacturer', fontsize=12)
+plt.xlim(0, 100)
+plt.show()
+```
+
+
+    
+![png](README_files/README_49_0.png)
+    
+
+
+Severity by weather condition
+
+
+```python
+weather_counts = df_clean['Weather.Condition'].value_counts().head(5)
+weather_data = df_clean[df_clean['Weather.Condition'].isin(weather_counts.index)]
+
+weather_severity = weather_data.groupby(['Weather.Condition', 'Severity.Category']).size().unstack().fillna(0)
+
+plt.figure(figsize=(14, 7))
+weather_severity.plot(kind='bar', stacked=True)
+plt.title('Accident Severity by Weather Conditions', fontsize=16)
+plt.xlabel('Weather Condition', fontsize=12)
+plt.ylabel('Number of Accidents', fontsize=12)
+plt.legend(title='Severity Level')
+plt.xticks(rotation=45)
+plt.show()
+```
+
+
+    <Figure size 1008x504 with 0 Axes>
+
+
+
+    
+![png](README_files/README_51_1.png)
+    
+
+
+Severity Trend Over Time (Last 20 years)
+
+
+```python
+df_recent = df_clean[df_clean['Year'] >= 2003]
+
+# Calculate yearly severity percentages
+yearly_severity = df_recent.groupby(['Year', 'Severity.Category']).size().unstack().fillna(0)
+yearly_severity_pct = yearly_severity.div(yearly_severity.sum(axis=1), axis=0) * 100
+
+plt.figure(figsize=(14, 7))
+
+years = yearly_severity_pct.index.to_numpy()
+
+for severity in ['No Injury', 'Minor Injury', 'Serious Injury', 'Fatal']:
+    if severity in yearly_severity_pct.columns:
+        plt.plot(years, yearly_severity_pct[severity].to_numpy(), 
+                marker='o', linewidth=2, markersize=4, label=severity)
+
+plt.title('Severity Trends Over Time (2003-2023)', fontsize=16)
+plt.xlabel('Year', fontsize=12)
+plt.ylabel('% of Total Accidents', fontsize=12)
+plt.legend(title='Severity Level')
+plt.grid(True, alpha=0.3)
+plt.show()
+```
+
+
+    
+![png](README_files/README_53_0.png)
+    
+
+
+Manufactureres with lowest fatalities
+
+
+```python
+make_stats = df_clean.groupby('Make').agg(
+    Total_Accidents=('Event.Id', 'count'),
+    Fatal_Accidents=('Total.Fatal.Injuries', 'sum')
+).reset_index()
+
+# Calculate Fatal Accident Rate
+make_stats['Fatal_Accident_Rate'] = make_stats['Fatal_Accidents'] / make_stats['Total_Accidents']
+
+# Filter for statistical significance (e.g., at least 50 accidents to avoid skew from rare planes)
+significant_makes = make_stats[make_stats['Total_Accidents'] >= 50].sort_values('Fatal_Accident_Rate')
+
+# Identify Safest and Riskiest
+top_10_safest = significant_makes.head(10)
+top_10_riskiest = significant_makes.tail(10)
+```
+
+
+```python
+plt.figure(figsize=(12, 6))
+sns.barplot(data=top_10_safest, x='Fatal_Accident_Rate', y='Make', palette='viridis')
+plt.title('Top 10 Safest Aircraft Manufacturers (Lowest Fatal Accident Rate)')
+plt.xlabel('Fatal Accident Rate (Percentage of Accidents resulting in Fatality)')
+plt.ylabel('Manufacturer')
+plt.show()
+```
+
+
+    
+![png](README_files/README_56_0.png)
+    
+
+
+Model risk analysis
+
+
+```python
+# Group by Make and Model
+model_stats = df_clean.groupby(['Make', 'Model']).agg(
+    Total_Accidents=('Event.Id', 'count'),
+    Fatal_Accidents=('Total.Fatal.Injuries', 'sum')
+).reset_index()
+
+# Calculate Rate
+model_stats['Fatal_Accident_Rate'] = model_stats['Fatal_Accidents'] / model_stats['Total_Accidents']
+
+# Filter for statistical significance (> 40 accidents)
+significant_models = model_stats[model_stats['Total_Accidents'] >= 40].sort_values('Fatal_Accident_Rate')
+
+# Separate Safest and Riskiest
+top_safest_models = significant_models.head(10)
+top_riskiest_models = significant_models.tail(10)
+
+# Visualization - Safest Models
+plt.figure(figsize=(12, 6))
+# Create a label combining Make and Model for clarity
+top_safest_models['Make_Model'] = top_safest_models['Make'] + ' ' + top_safest_models['Model']
+sns.barplot(data=top_safest_models, x='Fatal_Accident_Rate', y='Make_Model', palette='Blues_d')
+plt.title('Top 10 Safest Aircraft Models (Lowest Fatal Accident Rate)')
+plt.xlabel('Fatal Accident Rate')
+plt.ylabel('Aircraft Model')
+plt.tight_layout()
+plt.savefig('safest_models.png')
+```
+
+    <ipython-input-328-10f6296ef805>:20: SettingWithCopyWarning: 
+    A value is trying to be set on a copy of a slice from a DataFrame.
+    Try using .loc[row_indexer,col_indexer] = value instead
+    
+    See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+      top_safest_models['Make_Model'] = top_safest_models['Make'] + ' ' + top_safest_models['Model']
+    
+
+
+    
+![png](README_files/README_58_1.png)
+    
+
+
+Accidents by phase of flight
+
+
+```python
+phase_counts = df_clean['Broad.phase.of.flight'].value_counts().reset_index()
+phase_counts.columns = ['Phase', 'Count']
+plt.figure(figsize=(12, 8))
+sns.barplot(x='Count', y='Phase', data=phase_counts, palette='viridis')
+plt.title('Accidents by Broad Phase of Flight')
+plt.xlabel('Number of Accidents')
+plt.ylabel('Phase of Flight')
+plt.savefig('accidents_by_phase.png')
+```
+
+
+    
+![png](README_files/README_60_0.png)
+    
+
+
+
+```python
+#corelation matrix
+correlation_matrix = df_clean[['Total.Fatal.Injuries', 'Total.Serious.Injuries', 'Total.Minor.Injuries', 'Total.Uninjured']].corr()
+plt.figure(figsize=(10, 8))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+plt.title('Correlation Matrix of Injury Counts', fontsize=16)  
+plt.show()
+```
+
+
+    
+![png](README_files/README_61_0.png)
+    
+
+
+## Recommendation
+Based on the analysis of the NTSB aviation accident dataset from 1990 onward, here are three **concrete, actionable business recommendations** for the Head of the Aviation Division:
+
+---
+
+### 1. Prioritize aircraft manufactured by Cessna, Piper, and Beechcraft for initial fleet acquisition due to their lower fatality rates and high operational reliability.
+- Among the top 10 manufacturers by accident volume, **Cessna, Piper, and Beechcraft** showed relatively **lower fatality rates** (around 30–40%) compared to manufacturers like Bell Helicopter (nearly 70%) and Robinson Helicopter (over 50%).
+- These manufacturers also have a high volume of reported accidents, indicating widespread use and extensive real-world safety data, which supports reliability assessments.
+
+---
+
+### 2. Avoid or limit the acquisition of Robinson and Bell helicopters unless specialized training and enhanced safety protocols are implemented. 
+- **Robinson Helicopter** and **Bell Helicopter** exhibited the highest fatality rates among top manufacturers (~50–70%).
+- These aircraft are often used in **personal, instructional, and aerial observation** flights, which are riskier operational contexts.
+
+---
+
+### 3. Implement a phased operational strategy 
+- The majority of accidents occurred during **Personal** and **Instructional** flights, but these also represent the largest volume of flight data.
+- **Commercial** and **Corporate** flights had fewer accidents and lower fatality rates in the dataset, suggesting they are safer once operational maturity is achieved.
+
+---
+- **Manufacturer risk stratification** was derived from fatality rate analysis and accident volume.
+- **Operational context** (purpose of flight, weather conditions) was considered to align recommendations with real-world risk factors.
+- **Modern data focus** (post-1990) ensures relevance to current aviation technology and regulations.
+
+These recommendations are designed to **minimize financial, legal, and reputational risks** while enabling a structured, evidence-based expansion into aviation.
