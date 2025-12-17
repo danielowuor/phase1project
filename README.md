@@ -910,8 +910,8 @@ Based on the analysis of the NTSB aviation accident dataset from 1990 onward, he
 
 ---
 
-### 1. Prioritize aircraft manufactured by Cessna, Piper, and Beechcraft for initial fleet acquisition due to their lower fatality rates and high operational reliability.
-- Among the top 10 manufacturers by accident volume, **Cessna, Piper, and Beechcraft** showed relatively **lower fatality rates** (around 30–40%) compared to manufacturers like Bell Helicopter (nearly 70%) and Robinson Helicopter (over 50%).
+### 1. Prioritize aircraft manufactured by Boeing, Cessna, Piper, Airbus, and Bellanca  for initial fleet acquisition due to their lower fatality rates and high operational reliability.
+- Among the top 10 manufacturers by accident volume, **Boeing, Cessna, Piper, Airbus, and Bellanca ** showed relatively **lower fatality rates**  compared to manufacturers like Bell Helicopter (nearly 70%) and Robinson Helicopter (over 50%).
 - These manufacturers also have a high volume of reported accidents, indicating widespread use and extensive real-world safety data, which supports reliability assessments.
 
 ---
