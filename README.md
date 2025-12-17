@@ -338,6 +338,56 @@ df_clean['Model'] = df_clean['Model'].str.strip()
 df_clean['Make_Model'] = df_clean['Make'] + ' ' + df_clean['Model']
 ```
 
+
+```python
+# Define the Cleaning Dictionary
+make_replacements = {
+    # Boeing Variations
+    'THE BOEING COMPANY': 'BOEING',
+    'BOEING COMPANY': 'BOEING',
+    'BOEING COMMERCIAL AIRPLANE GRO': 'BOEING',
+    
+    # Airbus Variations
+    'AIRBUS INDUSTRIE': 'AIRBUS',
+    'AIRBUS INDUSTRIES': 'AIRBUS',
+    
+    # Beechcraft Variations
+    'BEECHCRAFT': 'BEECH',
+    'HAWKER BEECHCRAFT': 'BEECH',
+    'HAWKER BEECHCRAFT CORP': 'BEECH',
+    'BEECH AIRCRAFT CORPORATION': 'BEECH',
+    
+    # Cessna Variations
+    'CESSNA AIRCRAFT CO': 'CESSNA',
+    'CESSNA EIRCRAFT CO': 'CESSNA',  # Handling potential typos
+    
+    # Piper Variations
+    'PIPER AIRCRAFT': 'PIPER',
+    'THE PIPER AIRCRAFT CORP': 'PIPER',
+    
+    # McDonnell Douglas Variations
+    'MCDONNELL DOUGLAS AIRCRAFT CO': 'MCDONNELL DOUGLAS',
+    'MCDONNELL DOUGLAS CORPORATION': 'MCDONNELL DOUGLAS',
+    
+    # Cirrus Variations
+    'CIRRUS DESIGN CORP': 'CIRRUS',
+    'CIRRUS DESIGN CORP.': 'CIRRUS',
+    'CIRRUS DESIGN': 'CIRRUS',
+    
+    # Other Common General Aviation Makes
+    'GRUMMAN AMERICAN': 'GRUMMAN',
+    'GRUMMAN ACFT ENG COR-SCHWEIZER': 'GRUMMAN-SCHWEIZER',
+    'ROBINSON HELICOPTER': 'ROBINSON',
+    'ROBINSON HELICOPTER COMPANY': 'ROBINSON',
+    'AERO COMMANDER': 'AERO COMMANDER', # Sometimes listed as Rockwell
+    'MAULE AIRCRAFT': 'MAULE',
+    'MOONEY AIRCRAFT CORP': 'MOONEY'
+}
+
+# 3. Apply the Mapping
+df_clean['Make'] = df_clean['Make'].replace(make_replacements)
+```
+
 Event Date
 Converted the column to datetime format. We then filtered the dataset to include only records from 1995 to present. This ensures our recommendations are based on relevant, modern aviation history.
 
@@ -469,7 +519,7 @@ Filter out Rare Manufacturers
 
 ```python
 make_counts = df_clean['Make'].value_counts()
-common_makes = make_counts[make_counts >= 50].index
+common_makes = make_counts[make_counts >= 50].head(10).index
 
 df_clean = df_clean[df_clean['Make'].isin(common_makes)]
 
@@ -484,47 +534,47 @@ df_clean.info()
 ```
 
     <class 'pandas.core.frame.DataFrame'>
-    Index: 20741 entries, 24818 to 88886
+    Index: 16941 entries, 24825 to 88877
     Data columns (total 35 columns):
      #   Column                  Non-Null Count  Dtype         
     ---  ------                  --------------  -----         
-     0   Event.Id                20741 non-null  object        
-     1   Investigation.Type      20741 non-null  object        
-     2   Accident.Number         20741 non-null  object        
-     3   Event.Date              20741 non-null  datetime64[ns]
-     4   Location                20734 non-null  object        
-     5   Country                 20740 non-null  object        
-     6   Latitude                18516 non-null  object        
-     7   Longitude               18512 non-null  object        
-     8   Airport.Code            12730 non-null  object        
-     9   Airport.Name            12855 non-null  object        
-     10  Injury.Severity         19961 non-null  object        
-     11  Aircraft.damage         19621 non-null  object        
-     12  Aircraft.Category       20741 non-null  object        
-     13  Registration.Number     20515 non-null  object        
-     14  Make                    20741 non-null  object        
-     15  Model                   20728 non-null  object        
-     16  Amateur.Built           20727 non-null  object        
-     17  Number.of.Engines       18118 non-null  float64       
-     18  Engine.Type             20741 non-null  object        
-     19  FAR.Description         20309 non-null  object        
-     20  Schedule                2423 non-null   object        
-     21  Purpose.of.flight       20741 non-null  object        
-     22  Air.carrier             10068 non-null  object        
-     23  Total.Fatal.Injuries    20741 non-null  float64       
-     24  Total.Serious.Injuries  20741 non-null  float64       
-     25  Total.Minor.Injuries    20741 non-null  float64       
-     26  Total.Uninjured         20741 non-null  float64       
-     27  Weather.Condition       20741 non-null  object        
-     28  Broad.phase.of.flight   2797 non-null   object        
-     29  Report.Status           16148 non-null  object        
-     30  Publication.Date        19785 non-null  object        
-     31  Make_Model              20728 non-null  object        
-     32  Year                    20741 non-null  int32         
-     33  Severity.Category       20741 non-null  object        
-     34  Outcome                 20741 non-null  object        
+     0   Event.Id                16941 non-null  object        
+     1   Investigation.Type      16941 non-null  object        
+     2   Accident.Number         16941 non-null  object        
+     3   Event.Date              16941 non-null  datetime64[ns]
+     4   Location                16936 non-null  object        
+     5   Country                 16940 non-null  object        
+     6   Latitude                15007 non-null  object        
+     7   Longitude               15004 non-null  object        
+     8   Airport.Code            10594 non-null  object        
+     9   Airport.Name            10656 non-null  object        
+     10  Injury.Severity         16239 non-null  object        
+     11  Aircraft.damage         15966 non-null  object        
+     12  Aircraft.Category       16941 non-null  object        
+     13  Registration.Number     16742 non-null  object        
+     14  Make                    16941 non-null  object        
+     15  Model                   16933 non-null  object        
+     16  Amateur.Built           16928 non-null  object        
+     17  Number.of.Engines       14780 non-null  float64       
+     18  Engine.Type             16941 non-null  object        
+     19  FAR.Description         16567 non-null  object        
+     20  Schedule                1949 non-null   object        
+     21  Purpose.of.flight       16941 non-null  object        
+     22  Air.carrier             8098 non-null   object        
+     23  Total.Fatal.Injuries    16941 non-null  float64       
+     24  Total.Serious.Injuries  16941 non-null  float64       
+     25  Total.Minor.Injuries    16941 non-null  float64       
+     26  Total.Uninjured         16941 non-null  float64       
+     27  Weather.Condition       16941 non-null  object        
+     28  Broad.phase.of.flight   2322 non-null   object        
+     29  Report.Status           13049 non-null  object        
+     30  Publication.Date        16112 non-null  object        
+     31  Make_Model              16933 non-null  object        
+     32  Year                    16941 non-null  int32         
+     33  Severity.Category       16941 non-null  object        
+     34  Outcome                 16941 non-null  object        
     dtypes: datetime64[ns](1), float64(5), int32(1), object(28)
-    memory usage: 5.6+ MB
+    memory usage: 4.6+ MB
     
 
 Export cleaned data
@@ -568,6 +618,7 @@ outcome_counts = df_top.groupby(['Make', 'Outcome']).size().unstack(fill_value=0
 # Calculate Percentage
 outcome_counts['Total'] = outcome_counts['Fatal'] + outcome_counts['Non-Fatal']
 outcome_counts['Fatality_Rate'] = (outcome_counts['Fatal'] / outcome_counts['Total']) * 100
+df_clean['Fatality.Rate'] = outcome_counts['Fatality_Rate']
 
 # Sort by Fatality Rate for the plot
 outcome_counts = outcome_counts.sort_values('Fatality_Rate', ascending=False)
@@ -586,13 +637,13 @@ plt.legend()
 
 
 
-    <matplotlib.legend.Legend at 0x28aea377610>
+    <matplotlib.legend.Legend at 0x2e53bcdae20>
 
 
 
 
     
-![png](README_files/README_43_1.png)
+![png](README_files/README_44_1.png)
     
 
 
@@ -613,7 +664,7 @@ plt.show()
 
 
     
-![png](README_files/README_45_0.png)
+![png](README_files/README_46_0.png)
     
 
 
@@ -642,7 +693,7 @@ plt.show()
 
 
     
-![png](README_files/README_47_1.png)
+![png](README_files/README_48_1.png)
     
 
 
@@ -670,7 +721,7 @@ plt.show()
 
 
     
-![png](README_files/README_49_0.png)
+![png](README_files/README_50_0.png)
     
 
 
@@ -699,7 +750,7 @@ plt.show()
 
 
     
-![png](README_files/README_51_1.png)
+![png](README_files/README_52_1.png)
     
 
 
@@ -732,7 +783,7 @@ plt.show()
 
 
     
-![png](README_files/README_53_0.png)
+![png](README_files/README_54_0.png)
     
 
 
@@ -768,7 +819,7 @@ plt.show()
 
 
     
-![png](README_files/README_56_0.png)
+![png](README_files/README_57_0.png)
     
 
 
@@ -804,7 +855,7 @@ plt.tight_layout()
 plt.savefig('safest_models.png')
 ```
 
-    <ipython-input-328-10f6296ef805>:20: SettingWithCopyWarning: 
+    <ipython-input-29-10f6296ef805>:20: SettingWithCopyWarning: 
     A value is trying to be set on a copy of a slice from a DataFrame.
     Try using .loc[row_indexer,col_indexer] = value instead
     
@@ -814,7 +865,7 @@ plt.savefig('safest_models.png')
 
 
     
-![png](README_files/README_58_1.png)
+![png](README_files/README_59_1.png)
     
 
 
@@ -834,7 +885,7 @@ plt.savefig('accidents_by_phase.png')
 
 
     
-![png](README_files/README_60_0.png)
+![png](README_files/README_61_0.png)
     
 
 
@@ -850,7 +901,7 @@ plt.show()
 
 
     
-![png](README_files/README_61_0.png)
+![png](README_files/README_62_0.png)
     
 
 
