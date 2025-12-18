@@ -937,3 +937,12 @@ Based on the analysis of the NTSB aviation accident dataset from 1990 onward, he
 - **Modern data focus** (post-1990) ensures relevance to current aviation technology and regulations.
 
 These recommendations are designed to **minimize financial, legal, and reputational risks** while enabling a structured, evidence-based expansion into aviation.
+
+## Interactive Dashboard
+
+An interactive Tableau dashboard was created to explore aviation accident trends,
+severity, and aircraft characteristics.
+
+ **View the Dashboard on Tableau Public**  
+
+https://public.tableau.com/app/profile/daniel.owuor/viz/Book2_17660221749660/Dashboard2
