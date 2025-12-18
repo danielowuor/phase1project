@@ -172,5 +172,15 @@ poetry.toml
 
 # LSP config files
 pyrightconfig.json
+# PowerPoint temp files
+~$*.pptx
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Python cache
+__pycache__/
+*.pyc
+
 
 # End of https://www.toptal.com/developers/gitignore/api/python
