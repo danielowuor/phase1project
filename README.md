@@ -905,6 +905,11 @@ plt.show()
     
 
 
+## Powerpoint Presentation
+
+[Project Presentation](AviationRiskAnalysis.pdf)
+
+
 ## Recommendation
 Based on the analysis of the NTSB aviation accident dataset from 1990 onward, here are three **concrete, actionable business recommendations** for the Head of the Aviation Division:
 
