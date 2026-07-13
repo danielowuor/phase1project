@@ -1,4 +1,4 @@
-# PHASE 1 PROJECT - Aviation Risk Analysis & Recommendations
+# Aviation Risk Analysis & Recommendations
 
 ## Introduction
 As the company is seeking to diversify its portfolio through expansion into commercial and private aviation, it is impotrant to have a deep understanding of operational risks. Using the accident data from the National Transportation Safety Board, this project evaluates the safety records of various aircraft manufacturesrs and models from 1962 to 2023. I will explore the data to determine the lowest risk options available. This will inform actionable recommendations to stakeholders to acquire safe and reliable fleet.
